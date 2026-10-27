@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { Scene } from "@/components/scene";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 import "./styles/base.css";
 import "./styles/scene.css";
@@ -22,7 +23,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="sr" data-mode="light" className={`${playfair.variable} ${jakarta.variable} ${inter.variable}`}>
+    <html lang="sr" data-mode="light" className={`${playfair.variable} ${jakarta.variable} ${inter.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <Scene />
         {children}

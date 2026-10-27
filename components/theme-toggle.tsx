@@ -1,16 +1,56 @@
-type ThemeToggleProps = {
-  mode?: "light" | "dark";
-  onToggle?: () => void;
-};
+"use client";
 
-export function ThemeToggle({ mode = "light", onToggle }: ThemeToggleProps) {
+import { useLayoutEffect, useSyncExternalStore } from "react";
+import { THEME_STORAGE_KEY, type ThemeMode } from "@/lib/theme";
+
+function readMode(): ThemeMode {
+  return document.documentElement.getAttribute("data-mode") === "dark" ? "dark" : "light";
+}
+
+function readStoredMode(): ThemeMode | null {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function readSystemMode(): ThemeMode {
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyMode(mode: ThemeMode): void {
+  document.documentElement.setAttribute("data-mode", mode);
+}
+
+function subscribe(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-mode"] });
+  return () => observer.disconnect();
+}
+
+export function ThemeToggle() {
+  const mode = useSyncExternalStore(subscribe, readMode, (): ThemeMode => "light");
   const isDark = mode === "dark";
+
+  useLayoutEffect(() => {
+    applyMode(readStoredMode() ?? readSystemMode());
+  }, []);
+
+  function toggle(): void {
+    const next: ThemeMode = isDark ? "light" : "dark";
+    applyMode(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {}
+  }
 
   return (
     <button
       className="theme-toggle"
       type="button"
-      onClick={onToggle}
+      onClick={toggle}
       aria-label={isDark ? "Prebaci na dnevnu temu" : "Prebaci na nocnu temu"}
     >
       <span className="theme-toggle__icon" aria-hidden="true">

@@ -1,0 +1,96 @@
+AI PRETRAGA SMEŠTAJA - PLAN ARHITEKTURE
+=======================================
+
+1. CILJ
+-------
+Korisnik upiše zahtev običnim jezikom, a sistem ga pretvori u filtere za pretragu.
+
+Primer unosa:
+    "Želim da rezervišem Grčku 10 dana, Halkidiki sa 2 dece, mora da ima wifi i klimu"
+
+Rezultat (GET parametri):
+    kids=2&place=Halkidiki&wifi=yes&air-condition=yes
+
+
+2. ULOGE PO SLOJEVIMA
+---------------------
+React (frontend, /home)
+    - Input polje za AI pretragu.
+    - Šalje tekst korisnika ka Next API ruti.
+
+Next.js (pages/homeSearch.ts + /api/homeSearch.ts)
+    - Prima tekst od React-a.
+    - Šalje tekst + konfiguraciju filtera ka OpenAI-u.
+    - Od OpenAI-a dobija JSON sa popunjenim parametrima i greskama u vidu errors
+    - Pretvara JSON u POST i poziva Laravel.
+        - NPR: laravel.com/api/search -> vraca rez
+
+Laravel (backend)
+    - Endpoint: /api/search
+    - Na osnovu JSON-a radi upit nad bazom i vraća rezultate.
+
+
+3. TOK PODATAKA
+---------------
+    React (input)
+        -> Next API
+            -> OpenAI (konfiguracija + tekst korisnika)
+            = JSON sa parametrima
+            -> Laravel /api/search?...
+        <- rezultati pretrage
+    -> React (prikaz)
+
+
+4. KONFIGURACIJA FILTERA (search_options)
+-----------------------------------------
+Lista svih filtera koje AI sme da popuni. Za svaki filter se navodi
+tip, opis i ključne reči / tagovi, da bi AI znao šta da traži u tekstu.
+
+    search_options = {
+        air_condition: { type: Boolean, description: "Da li ima klimu?" },
+        wifi:          { type: Boolean, description: "Da li ima wifi?" },
+        kids_no:       { type: Integer, description: "Broj dece" },
+        place:         { type: String,  description: "Lokacija / destinacija" },
+        ...
+    }
+
+
+5. PROMPT ZA OPENAI
+-------------------
+Šalje se:
+    - konfiguracija (ključne reči, tagovi, opisi filtera)
+    - tekst koji je korisnik uneo
+
+Instrukcija:
+    "Imaš ovu konfiguraciju i tekst koji je korisnik uneo.
+     Vrati JSON sa popunjenim podacima."
+
+
+6. FORMAT ODGOVORA OD AI-a
+--------------------------
+    {
+        "errors": ["air_condition"],
+        "data": {
+            "kids": 2,
+            "ac": true
+        }
+    }
+
+    - data   -> filteri koje je AI uspeo da prepozna i popuni
+    - errors -> filteri koji nisu validni ili nisu mogli da se odrede
+
+Next mora da validira odgovor pre slanja Laravelu
+(npr. "kids: 100" je nerealna vrednost i treba je odbaciti).
+
+
+7. LARAVEL
+----------
+    - Prima POST parametre (npr. broj_dece, mesto, wifi, klima).
+    - Gradi upit nad bazom samo za filtere koji su prosleđeni.
+
+
+8. BEZBEDNOST
+-------------
+    - API ključevi (OpenAI, Laravel) se čuvaju isključivo u .env fajlu
+      na serveru i koriste se samo u Next API ruti, nikad u React kodu.
+    - .env je već u .gitignore i ne sme da se commit-uje.
