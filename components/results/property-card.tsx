@@ -1,11 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
-import type { Property } from "@/lib/types";
+import type { PropertyCardData } from "@/lib/types";
+import { AccommodationPhoto } from "../accommodation-photo";
 import { Icon } from "../icons";
 import { Stars } from "../stars";
 
 type PropertyCardProps = {
-  property: Property;
+  property: PropertyCardData;
   href: string;
   index?: number;
   isTop?: boolean;
@@ -16,13 +16,7 @@ export function PropertyCard({ property: p, href, index = 0, isTop = false, isFa
   return (
     <li className={`prop${isTop ? " prop--top" : ""}`} style={{ animationDelay: `${Math.min(index, 6) * 50}ms` }}>
       <div className="prop__pic">
-        <Image
-          src={p.img}
-          alt={`${p.place}, ${p.region}`}
-          fill
-          sizes="(max-width: 600px) 100vw, 300px"
-          loading={index < 3 ? "eager" : "lazy"}
-        />
+        <AccommodationPhoto src={p.img} alt={p.region ? `${p.place}, ${p.region}` : p.place} isEager={index < 3} />
         {isTop && <span className="pic-tag">Najbolji izbor</span>}
         {p.discount && <span className="pic-off">{p.discount}</span>}
         <span className="pic-place">
@@ -30,10 +24,11 @@ export function PropertyCard({ property: p, href, index = 0, isTop = false, isFa
           {p.place}
         </span>
         <button
-          className="fav"
+          className="fav is-unavailable"
           type="button"
           aria-pressed={isFavorite}
-          aria-label={isFavorite ? "Ukloni iz omiljenih" : "Sacuvaj u omiljene"}
+          aria-label={isFavorite ? "Ukloni iz omiljenih" : "Sačuvaj u omiljene"}
+          title="Još nije povezano: nema omiljenih"
         >
           <Icon name={isFavorite ? "heart" : "heartOutline"} />
         </button>
@@ -49,18 +44,26 @@ export function PropertyCard({ property: p, href, index = 0, isTop = false, isFa
             </h3>
             <div className="prop__meta">
               <span className="type-pill">{p.typeLabel}</span>
-              <Stars count={p.stars} />
+              {p.stars !== null && <Stars count={p.stars} />}
+              {p.region && (
+                <>
+                  <span className="dot" />
+                  <span>{p.region}</span>
+                </>
+              )}
               <span className="dot" />
-              <span>{p.region}</span>
-              <span className="dot" />
-              <span>do {p.cap} osoba</span>
+              <span>
+                do {p.cap} {p.cap >= 2 && p.cap <= 4 ? "osobe" : "osoba"}
+              </span>
             </div>
           </div>
           <ul className="amen">
-            <li>
-              <Icon name="beach" />
-              {p.beach} od plaze
-            </li>
+            {p.beach !== null && (
+              <li>
+                <Icon name="beach" />
+                {p.beach} od plaže
+              </li>
+            )}
             {p.amenities.map((a) => (
               <li key={a.label}>
                 <Icon name={a.icon} />
@@ -87,20 +90,22 @@ export function PropertyCard({ property: p, href, index = 0, isTop = false, isFa
             )}
             {p.inBudget && (
               <span className="tag-ok">
-                <Icon name="check" />U okviru budzeta
+                <Icon name="check" />U okviru budžeta
               </span>
             )}
           </div>
         </div>
 
         <div className="prop__side">
-          <div className="score">
-            <div className="score__text">
-              {p.scoreLabel}
-              <small>{p.reviews} recenzija</small>
+          {p.score !== null && (
+            <div className="score">
+              <div className="score__text">
+                {p.scoreLabel}
+                <small>{p.reviews} recenzija</small>
+              </div>
+              <div className="score__num">{p.score.toFixed(1)}</div>
             </div>
-            <div className="score__num">{p.score.toFixed(1)}</div>
-          </div>
+          )}
           <div className="price">
             <div className="price__for">{p.priceFor}</div>
             {p.oldTotal && <div className="price__old">{p.oldTotal} EUR</div>}
@@ -108,7 +113,7 @@ export function PropertyCard({ property: p, href, index = 0, isTop = false, isFa
               {p.total}
               <small>EUR</small>
             </div>
-            <div className="price__pn">{p.perNight} EUR po noci · sve takse</div>
+            <div className="price__pn">{p.perNight} EUR po noći · sve takse</div>
           </div>
           <Link className="prop__cta" href={href}>
             Pogledaj ponudu <Icon name="arrowRight" />

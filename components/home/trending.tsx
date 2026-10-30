@@ -1,5 +1,6 @@
-import Image from "next/image";
+import Link from "next/link";
 import type { Deal } from "@/lib/types";
+import { AccommodationPhoto } from "../accommodation-photo";
 
 export function Trending({ deals }: { deals: Deal[] }) {
   return (
@@ -7,18 +8,17 @@ export function Trending({ deals }: { deals: Deal[] }) {
       <div className="trending__inner">
         <div className="trending__head">
           <div>
-            <p className="eyebrow">Trending · leto 2027</p>
-            <h2 id="trending-title">Najtrazenije ovog leta</h2>
+            <p className="eyebrow">Najniže cene</p>
+            <h2 id="trending-title">Najpovoljnije ponude</h2>
             <p className="trending__sub">
-              Ponude koje ljudi najvise rezervisu ove nedelje. Klikni na ponudu i prepisacemo je u pretragu, pa je
-              doteraj po svom.
+              Najjeftinija ponuda iz svake destinacije, za termine koji tek dolaze. Klikni na ponudu i pogledaj detalje.
             </p>
           </div>
-          <span className="trending__note">Cene su ukupne, za navedeni broj osoba.</span>
+          <span className="trending__note">Cene su ukupne, za ceo boravak.</span>
         </div>
         <ul className="deals">
           {deals.map((deal) => (
-            <DealCard key={deal.title} deal={deal} />
+            <DealCard key={deal.href} deal={deal} />
           ))}
         </ul>
       </div>
@@ -30,8 +30,8 @@ export function DealCard({ deal }: { deal: Deal }) {
   return (
     <li className="deal">
       <div className="deal__pic">
-        <Image src={deal.img} alt={deal.place} fill sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 380px" />
-        <span className="deal__tag">{deal.tag}</span>
+        <AccommodationPhoto src={deal.img} alt={deal.place} />
+        {deal.tag && <span className="deal__tag">{deal.tag}</span>}
         <span className="deal__place">{deal.place}</span>
       </div>
       <div className="deal__body">
@@ -43,12 +43,12 @@ export function DealCard({ deal }: { deal: Deal }) {
         </ul>
         <div className="deal__foot">
           <div className="deal__price">
-            <small>ukupno, vec od</small>
+            <small>ukupno</small>
             {deal.price} EUR
           </div>
-          <button className="deal__btn" type="button">
-            Zelim ovo
-          </button>
+          <Link className="deal__btn" href={deal.href}>
+            Pogledaj ponudu
+          </Link>
         </div>
       </div>
     </li>

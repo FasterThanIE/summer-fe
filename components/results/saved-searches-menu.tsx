@@ -23,7 +23,7 @@ export function SavedSearchesMenu({ saved, open = false }: SavedSearchesMenuProp
                 <span>{s.name}</span>
                 <small>{s.summary}</small>
               </button>
-              <button type="button" className="saved__del" aria-label={`Obrisi ${s.name}`}>
+              <button type="button" className="saved__del" aria-label={`Obriši ${s.name}`}>
                 &times;
               </button>
             </li>

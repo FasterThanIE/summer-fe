@@ -1,16 +1,28 @@
+"use client";
+
+import type { SubmitEvent } from "react";
 import Link from "next/link";
+import { useLastSearch } from "@/lib/ai-search/last-search";
+import { useAiSearch } from "@/lib/ai-search/use-ai-search";
 import { Icon } from "../icons";
 
 type SearchBarProps = {
-  value: string;
   backHref?: string;
 };
 
-export function SearchBar({ value, backHref = "/" }: SearchBarProps) {
+export function SearchBar({ backHref = "/" }: SearchBarProps) {
+  const { search, isSearching, error } = useAiSearch();
+  const { text } = useLastSearch();
+
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    search(String(new FormData(event.currentTarget).get("q") ?? ""));
+  }
+
   return (
     <div className="results__bar">
-      <form className="results__bar-inner">
-        <Link className="back" href={backHref} aria-label="Nazad na pocetnu">
+      <form className="results__bar-inner" onSubmit={handleSubmit} aria-busy={isSearching}>
+        <Link className="back" href={backHref} aria-label="Nazad na početnu">
           <Icon name="arrowLeft" />
         </Link>
         <div className="re-search">
@@ -18,13 +30,27 @@ export function SearchBar({ value, backHref = "/" }: SearchBarProps) {
           <label className="sr" htmlFor="re-q">
             Izmeni pretragu
           </label>
-          <input id="re-q" name="q" type="text" autoComplete="off" defaultValue={value} />
-          <button className="btn" type="submit">
-            <span className="lbl">Trazi</span>
+          <input
+            key={text}
+            id="re-q"
+            name="q"
+            type="text"
+            autoComplete="off"
+            placeholder="Opiši putovanje…"
+            defaultValue={text}
+            required
+          />
+          <button className="btn" type="submit" disabled={isSearching}>
+            <span className="lbl">{isSearching ? "Tražim…" : "Traži"}</span>
             <span aria-hidden="true">&rarr;</span>
           </button>
         </div>
       </form>
+      {error && (
+        <p className="notices__item notices__item--error search-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

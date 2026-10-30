@@ -1,17 +1,28 @@
+import Link from "next/link";
+import { ResetLink } from "./reset-link";
+
 type EmptyStateProps = {
-  message?: string;
+  firstPageHref?: string;
 };
 
-export function EmptyState({
-  message = "Probaj da iskljucis neki filter, promenis broj osoba ili prosiris udaljenost od plaze.",
-}: EmptyStateProps) {
+export function EmptyState({ firstPageHref }: EmptyStateProps) {
+  if (firstPageHref) {
+    return (
+      <li className="empty">
+        <h3>Nema rezultata na ovoj strani</h3>
+        <p>Ova strana ne postoji. Vrati se na prvu stranu rezultata.</p>
+        <Link className="prop__cta" href={firstPageHref}>
+          Prva strana
+        </Link>
+      </li>
+    );
+  }
+
   return (
     <li className="empty">
-      <h3>Nema smestaja za ove filtere</h3>
-      <p>{message}</p>
-      <button className="prop__cta" type="button">
-        Ponisti filtere
-      </button>
+      <h3>Nema smeštaja za ove filtere</h3>
+      <p>Probaj da isključiš neki filter, promeniš broj osoba ili proširiš udaljenost od plaže.</p>
+      <ResetLink className="prop__cta">Poništi filtere</ResetLink>
     </li>
   );
 }

@@ -4,6 +4,7 @@ import { Scene } from "@/components/scene";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
+import "react-day-picker/style.css";
 import "./styles/base.css";
 import "./styles/scene.css";
 import "./styles/home.css";
@@ -18,7 +19,7 @@ const inter = Inter({ variable: "--font-inter", subsets: ["latin", "latin-ext"] 
 
 export const metadata: Metadata = {
   title: "Sunce putovanja",
-  description: "Pronadji letovanje u Grckoj po svojoj meri.",
+  description: "Pronađi letovanje u Grčkoj po svojoj meri.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
