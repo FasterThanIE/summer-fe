@@ -1,16 +1,36 @@
-import type { PriceSummary } from "@/lib/types";
+import { countWord, formatEuros, shortDate } from "@/lib/ai-search/present";
+import { SPECIAL_OFFER_LABELS, hasDiscount, paidPrice } from "@/lib/offers";
+import type { DetailUnit, Price } from "@/lib/types";
 import { Icon } from "../icons";
 
-export function PriceBox({ summary }: { summary: PriceSummary }) {
+export function PriceBox({ offer }: { offer: { unit: DetailUnit; price: Price } | null }) {
+  if (!offer) {
+    return (
+      <div className="card pricebox">
+        <p className="card__label">Izabrani termin</p>
+        <p className="unavailable-note">Trenutno nema slobodnih termina.</p>
+      </div>
+    );
+  }
+
+  const { unit, price } = offer;
+  const lines: [string, string][] = [
+    ["Smeštaj", unit.name],
+    ["Kapacitet", `do ${unit.max_guests} ${countWord(unit.max_guests, "osobe", "osobe", "osoba")}`],
+    ...(price.special_offer ? [["Ponuda", SPECIAL_OFFER_LABELS[price.special_offer]] as [string, string]] : []),
+  ];
+
   return (
     <div className="card pricebox">
       <p className="card__label">Izabrani termin</p>
       <div className="pb__term">
-        <b>{summary.term}</b>
-        <span>{summary.nights}</span>
+        <b>
+          {shortDate(price.check_in)} – {shortDate(price.check_out)}
+        </b>
+        <span>{price.nights} noći</span>
       </div>
       <ul className="pb__lines">
-        {summary.lines.map(([label, value]) => (
+        {lines.map(([label, value]) => (
           <li key={label}>
             <span>{label}</span>
             <b>{value}</b>
@@ -19,23 +39,19 @@ export function PriceBox({ summary }: { summary: PriceSummary }) {
       </ul>
       <div className="pricebox__row">
         <span className="pricebox__now">
-          {summary.total}
+          {formatEuros(paidPrice(price))}
           <small>EUR</small>
         </span>
-        {summary.oldTotal && <span className="pricebox__old">{summary.oldTotal} EUR</span>}
+        {hasDiscount(price) && <span className="pricebox__old">{formatEuros(Number(price.total_price))} EUR</span>}
       </div>
-      <div className="pricebox__pn">{summary.totalFor}</div>
-      <button className="btn-solid" type="button">
-        Rezervisi termin <Icon name="arrowRight" />
+      <div className="pricebox__pn">Ukupno za smeštajnu jedinicu</div>
+      <button className="btn-solid is-unavailable" type="button" title="Još nije povezano: nema rezervacija">
+        Rezerviši termin <Icon name="arrowRight" />
       </button>
-      <button className="btn-outline" type="button">
+      <button className="btn-outline is-unavailable" type="button" title="Još nije povezano: nema upita agenciji">
         <Icon name="mail" />
-        Posalji upit agenciji
+        Pošalji upit agenciji
       </button>
-      <p className="pricebox__note">
-        <Icon name="check" />
-        {summary.note}
-      </p>
     </div>
   );
 }

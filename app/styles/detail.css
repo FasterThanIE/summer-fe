@@ -113,3 +113,12 @@
   .lb__img { padding: 0 12px; }
   .lb__nav { top: auto; bottom: 90px; transform: none; }
 }
+
+.unavailable-note { margin: 0; color: var(--ink-muted); font: 500 14px/1.5 var(--font-ui); }
+.sec.is-unavailable, .card.is-unavailable { border-radius: 20px; }
+p.unavailable-note.is-unavailable { margin-top: 14px; padding: 10px 12px; }
+.ag__stat.is-unavailable, .pl__incl.is-unavailable, .ag__verified.is-unavailable { border-radius: 10px; }
+.btn-solid.is-unavailable, .btn-outline.is-unavailable, .icon-btn.is-unavailable { border-radius: 14px; }
+a.btn-outline { text-decoration: none; }
+.gallery--few { grid-template-rows: 420px; }
+.gallery--few button:first-child { grid-row: auto; }

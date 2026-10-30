@@ -1,35 +1,41 @@
-import type { PriceCell, PriceTable as PriceTableData } from "@/lib/types";
+import { formatEuros, shortDate } from "@/lib/ai-search/present";
+import { hasDiscount, paidPrice } from "@/lib/offers";
+import type { DetailUnit, Price } from "@/lib/types";
 
 type PriceListSectionProps = {
-  table: PriceTableData;
-  packageLabel: string;
-  included: string;
-  excluded: string;
-  mode?: "pkg" | "own";
-  stayNights?: number;
+  units: DetailUnit[];
+  nightsOptions: number[];
+  nights: number;
+  onNightsChange: (nights: number) => void;
+  selectedPriceId: number | null;
+  onSelect: (priceId: number) => void;
 };
 
-export function PriceListSection({ table, packageLabel, included, excluded, mode = "pkg", stayNights = 10 }: PriceListSectionProps) {
+export function PriceListSection({ units, nightsOptions, nights, onNightsChange, selectedPriceId, onSelect }: PriceListSectionProps) {
   return (
     <section className="sec pl" aria-labelledby="pl-title">
       <div className="pl__top">
         <div>
           <h2 id="pl-title">Cenovnik i termini</h2>
-          <p className="pl__lead">
-            Cene su po osobi u EUR za {stayNights} noci. Klikni na cenu da izaberes termin i strukturu.
-          </p>
+          <p className="pl__lead">Ukupna cena smeštajne jedinice u EUR za ceo boravak. Klikni na cenu da izabereš termin.</p>
         </div>
-        <div className="seg" role="group" aria-label="Vrsta ponude">
-          <button type="button" aria-pressed={mode === "pkg"}>
-            {packageLabel}
-          </button>
-          <button type="button" aria-pressed={mode === "own"}>
-            Samo smestaj
+        <div className="seg" role="group" aria-label="Broj noći">
+          {nightsOptions.map((option) => (
+            <button key={option} type="button" aria-pressed={option === nights} onClick={() => onNightsChange(option)}>
+              {option} noći
+            </button>
+          ))}
+          <button type="button" className="is-unavailable" disabled title="Još nije povezano: nema paketa sa prevozom">
+            Paket sa prevozom
           </button>
         </div>
       </div>
 
-      <PriceTable table={table} stayNights={stayNights} />
+      {nightsOptions.length === 0 ? (
+        <p className="unavailable-note">Trenutno nema slobodnih termina.</p>
+      ) : (
+        <PriceTable units={units} nights={nights} selectedPriceId={selectedPriceId} onSelect={onSelect} />
+      )}
 
       <ul className="pl__legend">
         <li>
@@ -38,104 +44,140 @@ export function PriceListSection({ table, packageLabel, included, excluded, mode
         </li>
         <li>
           <span className="lg lg--min" />
-          Najpovoljniji termin za strukturu
+          Najpovoljniji termin za jedinicu
         </li>
         <li>
-          <b>*</b> Cena sa popustom za rani upis do 31.01.2027.
+          <b>*</b> Cena sa popustom
         </li>
         <li>
-          <b>–</b> Popunjeno
+          <b>–</b> Nema termina
         </li>
       </ul>
-      <div className="pl__incl">
+      <div className="pl__incl is-unavailable" title="Još nije povezano: nema podataka">
         <div>
-          <b>Cena ukljucuje</b>
-          <span>{included}</span>
+          <b>Cena uključuje</b>
+          <span>Još nema podataka.</span>
         </div>
         <div>
-          <b>Cena ne ukljucuje</b>
-          <span>{excluded}</span>
+          <b>Cena ne uključuje</b>
+          <span>Još nema podataka.</span>
         </div>
       </div>
     </section>
   );
 }
 
-export function PriceTable({ table, stayNights }: { table: PriceTableData; stayNights: number }) {
-  const colClass = (i: number, base = "") => [base, i === table.selectedColumn && "is-col"].filter(Boolean).join(" ");
+type PriceTableProps = {
+  units: DetailUnit[];
+  nights: number;
+  selectedPriceId: number | null;
+  onSelect: (priceId: number) => void;
+};
+
+function PriceTable({ units, nights, selectedPriceId, onSelect }: PriceTableProps) {
+  const stays = [
+    ...new Map(
+      units
+        .flatMap((unit) => unit.prices)
+        .filter((price) => price.nights === nights)
+        .map((price) => [`${price.check_in}|${price.check_out}`, { checkIn: price.check_in, checkOut: price.check_out }]),
+    ).values(),
+  ].sort((first, second) => first.checkIn.localeCompare(second.checkIn));
+  const rows = units.map((unit) => ({
+    unit,
+    cells: stays.map((stay) => unit.prices.find((price) => price.check_in === stay.checkIn && price.check_out === stay.checkOut) ?? null),
+  }));
+  const selectedStay = stays.findIndex((_, column) => rows.some((row) => row.cells[column]?.id === selectedPriceId));
+  const columnClass = (column: number, base = "") => [base, column === selectedStay && "is-col"].filter(Boolean).join(" ");
 
   return (
-    <div>
-      <div className="pl__head">{table.heading}</div>
-      <div className="pl__scroll" tabIndex={0} role="region" aria-label="Cenovnik po terminima">
-        <table className="pl__table">
-          <thead>
-            <tr>
-              <th className="pl__sticky" rowSpan={2} scope="col">
-                Struktura
+    <div className="pl__scroll" tabIndex={0} role="region" aria-label="Cenovnik po terminima">
+      <table className="pl__table">
+        <thead>
+          <tr>
+            <th className="pl__sticky" rowSpan={2} scope="col">
+              Smeštajna jedinica
+            </th>
+            <th className="pl__pay" rowSpan={2} scope="col">
+              Osoba
+            </th>
+            {stays.map((stay, column) => (
+              <th key={stay.checkIn} scope="col" className={columnClass(column)}>
+                <span className="pl__n">{nights} noći</span>
               </th>
-              <th className="pl__aux" rowSpan={2} scope="col">
-                Pomocni lezaj
+            ))}
+          </tr>
+          <tr>
+            {stays.map((stay, column) => (
+              <th key={stay.checkIn} scope="col" className={columnClass(column, "pl__dates")}>
+                {shortDate(stay.checkIn)}
+                <br />
+                {shortDate(stay.checkOut)}
               </th>
-              <th className="pl__pay" rowSpan={2} scope="col">
-                Platnih osoba
-              </th>
-              {table.periods.map((period, i) => (
-                <th key={period.from} scope="col" className={colClass(i)}>
-                  <span className="pl__n">{stayNights} noci</span>
-                </th>
-              ))}
-            </tr>
-            <tr>
-              {table.periods.map((period, i) => (
-                <th key={period.from} scope="col" className={colClass(i, "pl__dates")}>
-                  {period.from}
-                  <br />
-                  {period.to}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {table.rows.map((row, ri) => (
-              <tr key={row.label} className={ri === table.selectedRow ? "is-row" : ""}>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ unit, cells }) => {
+            const offered = cells.filter((cell) => cell !== null);
+            const cheapest = offered.length > 0 ? Math.min(...offered.map(paidPrice)) : null;
+
+            return (
+              <tr key={unit.id} className={cells.some((cell) => cell?.id === selectedPriceId) ? "is-row" : ""}>
                 <th scope="row" className="pl__sticky">
-                  {row.label}
+                  {unit.name}
                 </th>
-                <td className="pl__aux">{row.aux}</td>
-                <td className="pl__pay">{row.paying}</td>
-                {row.cells.map((cell, ci) => (
-                  <td key={table.periods[ci].from}>
-                    <PriceCellButton cell={cell} label={`${row.label}, ${table.periods[ci].from} – ${table.periods[ci].to}`} />
+                <td className="pl__pay">{unit.max_guests}</td>
+                {cells.map((price, column) => (
+                  <td key={stays[column].checkIn}>
+                    <PriceCellButton
+                      price={price}
+                      isCheapest={price !== null && paidPrice(price) === cheapest}
+                      isSelected={price !== null && price.id === selectedPriceId}
+                      label={`${unit.name}, ${shortDate(stays[column].checkIn)} – ${shortDate(stays[column].checkOut)}`}
+                      onSelect={onSelect}
+                    />
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function PriceCellButton({ cell, label }: { cell: PriceCell; label: string }) {
-  if (!cell) {
+type PriceCellButtonProps = {
+  price: Price | null;
+  isCheapest: boolean;
+  isSelected: boolean;
+  label: string;
+  onSelect: (priceId: number) => void;
+};
+
+function PriceCellButton({ price, isCheapest, isSelected, label, onSelect }: PriceCellButtonProps) {
+  if (!price) {
     return (
-      <span className="pl__none" title="Popunjeno">
+      <span className="pl__none" title="Nema termina">
         –
       </span>
     );
   }
-  const classes = ["pl__cell", cell.cheapest && "is-min", cell.selected && "is-sel"].filter(Boolean).join(" ");
+
+  const isDiscounted = hasDiscount(price);
+  const classes = ["pl__cell", isCheapest && "is-min", isSelected && "is-sel"].filter(Boolean).join(" ");
+
   return (
     <button
       type="button"
       className={classes}
-      aria-pressed={Boolean(cell.selected)}
-      aria-label={`${label}: ${cell.price} EUR po osobi${cell.promo ? ", cena sa popustom za rani upis" : ""}`}
+      aria-pressed={isSelected}
+      aria-label={`${label}: ${formatEuros(paidPrice(price))} EUR${isDiscounted ? ", cena sa popustom" : ""}`}
+      onClick={() => onSelect(price.id)}
     >
-      {cell.price}
-      {cell.promo && <sup>*</sup>}
+      {formatEuros(paidPrice(price))}
+      {isDiscounted && <sup>*</sup>}
     </button>
   );
 }

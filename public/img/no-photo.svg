@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Nema fotografije">
+  <rect width="800" height="600" fill="#e8eef3"/>
+  <g fill="none" stroke="#8fa3b3" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="320" y="220" width="160" height="120" rx="14"/>
+    <circle cx="360" cy="258" r="12"/>
+    <path d="M320 318l44-40 34 30 30-26 52 46"/>
+  </g>
+  <text x="400" y="392" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#5f7486">Nema fotografije</text>
+</svg>

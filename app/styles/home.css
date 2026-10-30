@@ -58,7 +58,7 @@ textarea:focus { outline: none; }
 .deal__foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 6px; }
 .deal__price { font: 800 26px/1 var(--font-ui); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .deal__price small { display: block; margin-bottom: 4px; color: var(--ink-muted); font: 500 12px/14px var(--font-sans); }
-.deal__btn { min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--brand); color: var(--on-brand); font: 600 14px/20px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.deal__btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 0; text-decoration: none; border-radius: 999px; background: var(--brand); color: var(--on-brand); font: 600 14px/20px var(--font-sans); cursor: pointer; white-space: nowrap; }
 .deal__btn:hover { background: var(--brand-hover); }
 .deal__btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 960px) { .deals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

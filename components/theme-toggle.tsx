@@ -1,7 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useSyncExternalStore } from "react";
-import { THEME_STORAGE_KEY, type ThemeMode } from "@/lib/theme";
+import { THEME_STORAGE_KEY } from "@/lib/theme";
+import type { ThemeMode } from "@/lib/types";
 
 function readMode(): ThemeMode {
   return document.documentElement.getAttribute("data-mode") === "dark" ? "dark" : "light";
@@ -51,7 +52,7 @@ export function ThemeToggle() {
       className="theme-toggle"
       type="button"
       onClick={toggle}
-      aria-label={isDark ? "Prebaci na dnevnu temu" : "Prebaci na nocnu temu"}
+      aria-label={isDark ? "Prebaci na dnevnu temu" : "Prebaci na noćnu temu"}
     >
       <span className="theme-toggle__icon" aria-hidden="true">
         <svg className="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round">
@@ -62,7 +63,7 @@ export function ThemeToggle() {
           <path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1Z" />
         </svg>
       </span>
-      <span className="theme-toggle__label">{isDark ? "Noc" : "Dan"}</span>
+      <span className="theme-toggle__label">{isDark ? "Noć" : "Dan"}</span>
     </button>
   );
 }
